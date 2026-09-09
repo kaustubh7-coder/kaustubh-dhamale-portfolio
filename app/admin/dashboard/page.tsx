@@ -1,171 +1,192 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { FolderGit2, Wrench, MessageSquare, Mail } from "lucide-react";
-import { formatDate } from "@/lib/utils";
+import { FolderGit2, Wrench, MessageSquare, Mail, TrendingUp, ArrowRight, Award } from "lucide-react";
+
+function formatDate(d: Date | string) {
+  return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
 
 export default async function DashboardPage() {
   const session = await auth();
   if (!session) redirect("/admin/login");
 
-  let stats = { projects: 0, skills: 0, unread: 0, total: 0 };
-  let recentMessages: Array<{
-    id: string;
-    name: string;
-    email: string;
-    subject: string;
-    createdAt: Date;
-    read: boolean;
-  }> = [];
+  let stats = { projects: 0, skills: 0, certs: 0, unread: 0, total: 0 };
+  let recentMessages: Array<{ id: string; name: string; subject: string; createdAt: Date; read: boolean }> = [];
 
   try {
-    const [projectCount, skillCount, unreadCount, totalMessages, messages] =
-      await Promise.all([
-        prisma.project.count(),
-        prisma.skill.count(),
-        prisma.contactMessage.count({ where: { read: false } }),
-        prisma.contactMessage.count(),
-        prisma.contactMessage.findMany({
-          orderBy: { createdAt: "desc" },
-          take: 5,
-        }),
-      ]);
-    stats = {
-      projects: projectCount,
-      skills: skillCount,
-      unread: unreadCount,
-      total: totalMessages,
-    };
+    const [projectCount, skillCount, certCount, unreadCount, totalMessages, messages] = await Promise.all([
+      prisma.project.count(),
+      prisma.skill.count(),
+      prisma.certification.count(),
+      prisma.contactMessage.count({ where: { read: false } }),
+      prisma.contactMessage.count(),
+      prisma.contactMessage.findMany({ orderBy: { createdAt: "desc" }, take: 5 }),
+    ]);
+    stats = { projects: projectCount, skills: skillCount, certs: certCount, unread: unreadCount, total: totalMessages };
     recentMessages = messages;
-  } catch {
-    // DB not available
-  }
+  } catch { /* DB unavailable */ }
 
   const cards = [
-    {
-      label: "Total Projects",
-      value: stats.projects,
-      icon: FolderGit2,
-      color: "#0078d4",
-      href: "/admin/projects",
-    },
-    {
-      label: "Total Skills",
-      value: stats.skills,
-      icon: Wrench,
-      color: "#2899f5",
-      href: "/admin/skills",
-    },
-    {
-      label: "Unread Messages",
-      value: stats.unread,
-      icon: Mail,
-      color: stats.unread > 0 ? "#f59e0b" : "#00b4d8",
-      href: "/admin/messages",
-    },
-    {
-      label: "Total Messages",
-      value: stats.total,
-      icon: MessageSquare,
-      color: "#00b4d8",
-      href: "/admin/messages",
-    },
+    { label: "Projects",        value: stats.projects, Icon: FolderGit2,   color: "#1e6bff", href: "/admin/projects",       sub: "Portfolio projects" },
+    { label: "Skills",          value: stats.skills,   Icon: Wrench,        color: "#10b981", href: "/admin/skills",         sub: "Technical skills" },
+    { label: "Certifications",  value: stats.certs,    Icon: Award,         color: "#f59e0b", href: "/admin/certifications", sub: "Credentials" },
+    { label: "Unread Messages", value: stats.unread,   Icon: Mail,          color: stats.unread > 0 ? "#ef4444" : "#6366f1", href: "/admin/messages", sub: "Need attention" },
   ];
 
   return (
-    <div className="pt-16 md:pt-0">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-[var(--text-primary)]">
+    <div>
+      {/* Page header */}
+      <div style={{ marginBottom: "36px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+          <TrendingUp style={{ width: "16px", height: "16px", color: "#1e6bff" }} />
+          <span style={{ fontSize: "11px", fontWeight: 700, color: "#1e6bff", textTransform: "uppercase", letterSpacing: "0.08em" }}>Overview</span>
+        </div>
+        <h1 style={{ fontSize: "28px", fontWeight: 800, color: "#e6edf3", letterSpacing: "-0.02em", marginBottom: "6px" }}>
           Dashboard
         </h1>
-        <p className="text-sm text-[var(--text-secondary)] mt-1">
-          Welcome back. Here&apos;s an overview of your portfolio.
+        <p style={{ fontSize: "14px", color: "#8b949e", lineHeight: 1.6 }}>
+          Welcome back,{" "}
+          <span style={{ color: "#e6edf3", fontWeight: 500 }}>
+            {session.user?.email?.split("@")[0]}
+          </span>
+          . Here&apos;s your portfolio overview.
         </p>
       </div>
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {cards.map(({ label, value, icon: Icon, color, href }) => (
-          <a
-            key={label}
-            href={href}
-            className="rounded-xl border p-5 hover:border-[var(--border)] transition-all group"
-            style={{
-              borderColor: "var(--border-subtle)",
-              background: "var(--surface)",
-            }}
-          >
-            <div className="flex items-start justify-between mb-3">
-              <div
-                className="w-9 h-9 rounded-lg flex items-center justify-center"
-                style={{ background: `${color}15` }}
-              >
-                <Icon className="w-4 h-4" style={{ color }} />
+      {/* Stat cards — no hover handlers (server component) */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(4, 1fr)",
+        gap: "16px",
+        marginBottom: "32px",
+      }}>
+        {cards.map(({ label, value, Icon, color, href, sub }) => (
+          <a key={label} href={href} style={{
+            background: "#161b22",
+            border: "1px solid #2a3340",
+            borderRadius: "14px",
+            padding: "22px",
+            textDecoration: "none",
+            display: "block",
+          }}>
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "18px" }}>
+              <div style={{
+                width: "42px", height: "42px", borderRadius: "11px",
+                background: `${color}18`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <Icon style={{ width: "19px", height: "19px", color }} />
               </div>
+              <ArrowRight style={{ width: "14px", height: "14px", color: "#4d5966" }} />
             </div>
-            <div
-              className="text-2xl font-bold mb-0.5"
-              style={{ color }}
-            >
-              {value}
+            <div style={{ fontSize: "34px", fontWeight: 800, color, lineHeight: 1, marginBottom: "6px" }}>{value}</div>
+            <div style={{ fontSize: "13px", fontWeight: 600, color: "#e6edf3", marginBottom: "3px" }}>{label}</div>
+            <div style={{ fontSize: "12px", color: "#4d5966" }}>{sub}</div>
+          </a>
+        ))}
+      </div>
+
+      {/* Quick actions */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px", marginBottom: "32px" }}>
+        {[
+          { label: "Add New Project",       href: "/admin/projects",       color: "#1e6bff", Icon: FolderGit2 },
+          { label: "Add New Skill",         href: "/admin/skills",         color: "#10b981", Icon: Wrench },
+          { label: "Add Certification",     href: "/admin/certifications", color: "#f59e0b", Icon: Award },
+        ].map(({ label, href, color, Icon }) => (
+          <a key={label} href={href} style={{
+            display: "flex", alignItems: "center", gap: "14px",
+            padding: "18px 22px", borderRadius: "12px",
+            background: `${color}0d`, border: `1px solid ${color}28`,
+            textDecoration: "none",
+          }}>
+            <div style={{ width: "36px", height: "36px", borderRadius: "9px", background: `${color}18`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <Icon style={{ width: "17px", height: "17px", color }} />
             </div>
-            <p className="text-xs text-[var(--text-secondary)]">{label}</p>
+            <span style={{ fontSize: "14px", fontWeight: 600, color: "#e6edf3" }}>{label}</span>
+            <ArrowRight style={{ width: "14px", height: "14px", color: "#4d5966", marginLeft: "auto" }} />
           </a>
         ))}
       </div>
 
       {/* Recent messages */}
-      <div
-        className="rounded-xl border"
-        style={{
-          borderColor: "var(--border-subtle)",
-          background: "var(--surface)",
-        }}
-      >
-        <div
-          className="px-5 py-4 border-b flex items-center justify-between"
-          style={{ borderColor: "var(--border-subtle)" }}
-        >
-          <h2 className="font-semibold text-[var(--text-primary)] text-sm">
-            Recent Messages
-          </h2>
-          <a
-            href="/admin/messages"
-            className="text-xs text-[var(--accent-light)] hover:text-[var(--accent)] transition-colors"
-          >
-            View all
+      <div style={{ background: "#161b22", border: "1px solid #2a3340", borderRadius: "14px", overflow: "hidden" }}>
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "18px 22px", borderBottom: "1px solid #2a3340",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <MessageSquare style={{ width: "15px", height: "15px", color: "#8b949e" }} />
+            <span style={{ fontSize: "14px", fontWeight: 600, color: "#e6edf3" }}>Recent Messages</span>
+            {stats.unread > 0 && (
+              <span style={{
+                fontSize: "11px", fontWeight: 600, padding: "2px 9px", borderRadius: "9999px",
+                background: "rgba(245,158,11,0.12)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.2)",
+              }}>
+                {stats.unread} unread
+              </span>
+            )}
+          </div>
+          <a href="/admin/messages" style={{ fontSize: "12px", color: "#58a6ff", textDecoration: "none", fontWeight: 500 }}>
+            View all →
           </a>
         </div>
 
         {recentMessages.length === 0 ? (
-          <div className="px-5 py-8 text-center text-sm text-[var(--text-muted)]">
-            No messages yet.
+          <div style={{ padding: "56px 22px", textAlign: "center", color: "#4d5966", fontSize: "14px" }}>
+            No messages yet. They&apos;ll appear once someone contacts you.
           </div>
         ) : (
-          <ul className="divide-y" style={{ borderColor: "var(--border-subtle)" }}>
-            {recentMessages.map((msg) => (
-              <li key={msg.id} className="px-5 py-4 flex items-start gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-sm font-medium text-[var(--text-primary)] truncate">
+          <div>
+            {recentMessages.map((msg, i) => (
+              <a key={msg.id} href="/admin/messages" style={{
+                display: "flex", alignItems: "center", gap: "14px",
+                padding: "14px 22px",
+                borderBottom: i < recentMessages.length - 1 ? "1px solid #1c2230" : "none",
+                background: !msg.read ? "rgba(30,107,255,0.03)" : "transparent",
+                textDecoration: "none",
+              }}>
+                <div style={{
+                  width: "36px", height: "36px", borderRadius: "50%", flexShrink: 0,
+                  background: !msg.read ? "rgba(30,107,255,0.15)" : "#1c2230",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: "13px", fontWeight: 700,
+                  color: !msg.read ? "#58a6ff" : "#4d5966",
+                }}>
+                  {msg.name[0]?.toUpperCase()}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "2px" }}>
+                    <span style={{ fontSize: "13px", fontWeight: 600, color: "#e6edf3", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {msg.name}
                     </span>
                     {!msg.read && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] shrink-0" />
+                      <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#1e6bff", flexShrink: 0 }} />
                     )}
                   </div>
-                  <p className="text-xs text-[var(--text-secondary)] truncate">
+                  <span style={{ fontSize: "12px", color: "#8b949e", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block" }}>
                     {msg.subject}
-                  </p>
+                  </span>
                 </div>
-                <span className="text-xs text-[var(--text-muted)] shrink-0">
+                <span style={{ fontSize: "11px", color: "#4d5966", flexShrink: 0 }}>
                   {formatDate(msg.createdAt)}
                 </span>
-              </li>
+              </a>
             ))}
-          </ul>
+          </div>
         )}
       </div>
+
+      {/* Responsive grid fix for smaller screens */}
+      <style>{`
+        @media (max-width: 900px) {
+          .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+        @media (max-width: 560px) {
+          .stats-grid { grid-template-columns: 1fr !important; }
+          .actions-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
     </div>
   );
 }

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
-  Cloud,
   LayoutDashboard,
   FolderGit2,
   Wrench,
@@ -14,154 +13,174 @@ import {
   Menu,
   X,
   ExternalLink,
+  Shield,
+  Award,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
-const navItems = [
-  { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/projects", label: "Projects", icon: FolderGit2 },
-  { href: "/admin/skills", label: "Skills", icon: Wrench },
-  { href: "/admin/messages", label: "Messages", icon: MessageSquare },
+const NAV = [
+  { href: "/admin/dashboard",       label: "Dashboard",       icon: LayoutDashboard },
+  { href: "/admin/projects",        label: "Projects",        icon: FolderGit2 },
+  { href: "/admin/skills",          label: "Skills",          icon: Wrench },
+  { href: "/admin/certifications",  label: "Certifications",  icon: Award },
+  { href: "/admin/messages",        label: "Messages",        icon: MessageSquare },
 ];
 
-interface AdminSidebarProps {
-  email: string;
+const S = {
+  sidebar: {
+    width: "260px",
+    background: "#161b22",
+    borderRight: "1px solid #2a3340",
+    display: "flex" as const,
+    flexDirection: "column" as const,
+    height: "100%",
+  },
+  logo: {
+    display: "flex" as const,
+    alignItems: "center" as const,
+    gap: "10px",
+    padding: "20px 16px 18px",
+    borderBottom: "1px solid #2a3340",
+  },
+  logoIcon: {
+    width: "36px", height: "36px", borderRadius: "10px",
+    background: "linear-gradient(135deg, #1e6bff, #1252cc)",
+    display: "flex" as const, alignItems: "center" as const, justifyContent: "center" as const,
+    flexShrink: 0,
+    boxShadow: "0 4px 12px rgba(30,107,255,0.35)",
+  },
+  nav: { flex: 1, padding: "12px 8px", overflowY: "auto" as const },
+  footer: { padding: "8px 8px 16px", borderTop: "1px solid #2a3340" },
+  footerBtn: {
+    display: "flex" as const, alignItems: "center" as const, gap: "10px",
+    padding: "9px 10px", borderRadius: "8px", width: "100%",
+    fontSize: "13px", fontWeight: 500, cursor: "pointer" as const,
+    border: "none", background: "none", textAlign: "left" as const,
+    transition: "background 0.15s, color 0.15s",
+  },
+};
+
+function NavItem({ href, label, Icon, active }: { href: string; label: string; Icon: React.ElementType; active: boolean }) {
+  return (
+    <Link href={href} style={{
+      display: "flex", alignItems: "center", gap: "10px",
+      padding: "9px 10px", borderRadius: "8px", marginBottom: "2px",
+      fontSize: "13px", fontWeight: active ? 600 : 500,
+      color: active ? "#58a6ff" : "#8b949e",
+      background: active ? "rgba(30,107,255,0.12)" : "transparent",
+      border: active ? "1px solid rgba(30,107,255,0.2)" : "1px solid transparent",
+      textDecoration: "none", transition: "all 0.15s",
+    }}
+    onMouseEnter={e => { if (!active) { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.color = "#e6edf3"; }}}
+    onMouseLeave={e => { if (!active) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#8b949e"; }}}
+    >
+      <Icon style={{ width: "16px", height: "16px", flexShrink: 0 }} />
+      {label}
+    </Link>
+  );
 }
 
-export function AdminSidebar({ email }: AdminSidebarProps) {
+function SidebarInner({ email, onClose }: { email: string; onClose?: () => void }) {
   const pathname = usePathname();
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  const SidebarContent = () => (
-    <div className="flex flex-col h-full">
+  return (
+    <div style={S.sidebar}>
       {/* Logo */}
-      <div
-        className="flex items-center gap-2.5 px-5 py-5 border-b"
-        style={{ borderColor: "var(--border-subtle)" }}
-      >
-        <div className="w-8 h-8 rounded-lg bg-[var(--accent)] flex items-center justify-center shrink-0">
-          <Cloud className="w-4 h-4 text-white" />
+      <div style={S.logo}>
+        <div style={S.logoIcon}>
+          <Shield style={{ width: "18px", height: "18px", color: "#fff" }} />
         </div>
-        <div>
-          <div className="text-sm font-bold text-[var(--text-primary)]">
-            Admin Panel
-          </div>
-          <div className="text-xs text-[var(--text-muted)] truncate max-w-[140px]">
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: "14px", fontWeight: 700, color: "#e6edf3" }}>Admin Panel</div>
+          <div style={{ fontSize: "11px", color: "#4d5966", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {email}
           </div>
         </div>
+        {onClose && (
+          <button onClick={onClose} style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", color: "#4d5966", padding: "4px" }}>
+            <X style={{ width: "16px", height: "16px" }} />
+          </button>
+        )}
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 py-4" aria-label="Admin navigation">
-        <ul className="space-y-1" role="list">
-          {navItems.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href;
-            return (
-              <li key={href}>
-                <Link
-                  href={href}
-                  onClick={() => setMobileOpen(false)}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
-                    active
-                      ? "bg-[var(--accent)]/10 text-[var(--accent-light)] border border-[var(--accent)]/20"
-                      : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-2)]"
-                  )}
-                  aria-current={active ? "page" : undefined}
-                >
-                  <Icon className="w-4 h-4 shrink-0" />
-                  {label}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+      {/* Nav */}
+      <nav style={S.nav} aria-label="Admin navigation">
+        <div style={{ fontSize: "10px", fontWeight: 700, color: "#4d5966", letterSpacing: "0.08em", textTransform: "uppercase", padding: "0 10px 8px" }}>
+          Navigation
+        </div>
+        {NAV.map(({ href, label, icon: Icon }) => (
+          <NavItem key={href} href={href} label={label} Icon={Icon} active={pathname === href} />
+        ))}
       </nav>
 
       {/* Footer */}
-      <div
-        className="px-3 py-4 border-t space-y-1"
-        style={{ borderColor: "var(--border-subtle)" }}
-      >
-        <a
-          href="/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-2)] transition-all"
+      <div style={S.footer}>
+        <a href="/" target="_blank" rel="noopener noreferrer"
+          style={{ ...S.footerBtn, color: "#8b949e", textDecoration: "none", display: "flex" }}
+          onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.color = "#e6edf3"; }}
+          onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#8b949e"; }}
         >
-          <ExternalLink className="w-4 h-4 shrink-0" />
+          <ExternalLink style={{ width: "15px", height: "15px", flexShrink: 0 }} />
           View Portfolio
         </a>
         <button
           onClick={() => signOut({ callbackUrl: "/admin/login" })}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-[var(--text-secondary)] hover:text-red-400 hover:bg-red-500/5 transition-all text-left"
+          style={{ ...S.footerBtn, color: "#8b949e" }}
+          onMouseEnter={e => { e.currentTarget.style.background = "rgba(239,68,68,0.06)"; e.currentTarget.style.color = "#f87171"; }}
+          onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#8b949e"; }}
         >
-          <LogOut className="w-4 h-4 shrink-0" />
+          <LogOut style={{ width: "15px", height: "15px", flexShrink: 0 }} />
           Sign Out
         </button>
       </div>
     </div>
   );
+}
+
+export function AdminSidebar({ email }: { email: string }) {
+  const [open, setOpen] = useState(false);
 
   return (
     <>
-      {/* Desktop sidebar */}
-      <aside
-        className="hidden md:flex fixed left-0 top-0 bottom-0 w-64 flex-col border-r z-30"
-        style={{
-          borderColor: "var(--border-subtle)",
-          background: "var(--surface)",
-        }}
-        aria-label="Admin sidebar"
-      >
-        <SidebarContent />
+      {/* Desktop */}
+      <aside style={{
+        position: "fixed", left: 0, top: 0, bottom: 0,
+        width: "260px", zIndex: 30, flexDirection: "column",
+      }} className="hidden md:flex">
+        <SidebarInner email={email} />
       </aside>
 
-      {/* Mobile header */}
-      <div
-        className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3 border-b"
-        style={{
-          borderColor: "var(--border-subtle)",
-          background: "var(--surface)",
-        }}
-      >
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-[var(--accent)] flex items-center justify-center">
-            <Cloud className="w-3.5 h-3.5 text-white" />
+      {/* Mobile topbar — hidden on md+ via style tag below */}
+      <div id="admin-mobile-topbar" style={{
+        position: "fixed", top: 0, left: 0, right: 0, zIndex: 40,
+        height: "56px", background: "#161b22", borderBottom: "1px solid #2a3340",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "0 16px",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <div style={{ width: "30px", height: "30px", borderRadius: "8px", background: "linear-gradient(135deg, #1e6bff, #1252cc)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Shield style={{ width: "14px", height: "14px", color: "#fff" }} />
           </div>
-          <span className="text-sm font-bold text-[var(--text-primary)]">
-            Admin
-          </span>
+          <span style={{ fontSize: "14px", fontWeight: 700, color: "#e6edf3" }}>Admin</span>
         </div>
-        <button
-          onClick={() => setMobileOpen((v) => !v)}
-          className="p-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-lg transition-all"
-          aria-label={mobileOpen ? "Close menu" : "Open menu"}
-        >
-          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        <button onClick={() => setOpen(v => !v)} style={{ background: "none", border: "none", cursor: "pointer", color: "#8b949e", padding: "6px" }} aria-label="Toggle menu">
+          {open ? <X style={{ width: "20px", height: "20px" }} /> : <Menu style={{ width: "20px", height: "20px" }} />}
         </button>
       </div>
 
       {/* Mobile drawer */}
-      {mobileOpen && (
-        <div
-          className="md:hidden fixed inset-0 z-30"
-          onClick={() => setMobileOpen(false)}
-        >
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-          <aside
-            className="absolute left-0 top-0 bottom-0 w-64 border-r"
-            style={{
-              borderColor: "var(--border-subtle)",
-              background: "var(--surface)",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <SidebarContent />
+      {open && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 35 }} onClick={() => setOpen(false)}>
+          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }} />
+          <aside style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "260px", zIndex: 36 }} onClick={e => e.stopPropagation()}>
+            <SidebarInner email={email} onClose={() => setOpen(false)} />
           </aside>
         </div>
       )}
+
+      {/* Hide mobile topbar on desktop */}
+      <style>{`
+        @media (min-width: 768px) { #admin-mobile-topbar { display: none !important; } }
+        @media (max-width: 767px) { #admin-mobile-topbar { display: flex !important; } }
+      `}</style>
     </>
   );
 }

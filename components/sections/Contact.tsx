@@ -45,8 +45,8 @@ export function Contact() {
     padding: "12px 16px",
     borderRadius: "10px",
     fontSize: "14px",
-    color: "#0f172a",
-    background: "#f8fafc",
+    color: "var(--heading)",
+    background: "var(--bg-soft)",
     border: `1.5px solid ${errors[field] ? "#ef4444" : "#e2e8f0"}`,
     outline: "none",
     transition: "border-color 0.15s",
@@ -60,7 +60,7 @@ export function Contact() {
       initial={{ opacity: 0, y: 20 }}
       animate={inView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.5 }}
-      style={{ background: "#f8fafc", padding: "96px 0" }}
+      style={{ background: "var(--bg-soft)", padding: "96px 0" }}
     >
       <div style={{ maxWidth: "1140px", margin: "0 auto", padding: "0 40px" }}>
 
@@ -68,7 +68,7 @@ export function Contact() {
           <p style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: "#1e6bff", marginBottom: "12px" }}>
             Contact
           </p>
-          <h2 style={{ fontSize: "clamp(2rem, 4vw, 3rem)", fontWeight: 900, color: "#0f172a", lineHeight: 1.1, marginBottom: "16px" }}>
+          <h2 style={{ fontSize: "clamp(2rem, 4vw, 3rem)", fontWeight: 900, color: "var(--heading)", lineHeight: 1.1, marginBottom: "16px" }}>
             Let&apos;s Talk
           </h2>
           <div style={{ width: "48px", height: "3px", borderRadius: "9999px", background: "linear-gradient(90deg, #1e6bff, #60a5fa)" }} />
@@ -78,12 +78,12 @@ export function Contact() {
 
           {/* Left — info */}
           <div style={{
-            background: "#fff", border: "1px solid #e2e8f0", borderRadius: "16px",
+            background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: "16px",
             padding: "32px", boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
             display: "flex", flexDirection: "column", gap: "28px",
           }}>
             <div>
-              <h3 style={{ fontSize: "17px", fontWeight: 700, color: "#0f172a", marginBottom: "20px" }}>Get In Touch</h3>
+              <h3 style={{ fontSize: "17px", fontWeight: 700, color: "var(--heading)", marginBottom: "20px" }}>Get In Touch</h3>
               <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
                 {[
                   { icon: Mail,  label: "Email",    value: "kaustubhdhamale.work@gmail.com", href: "mailto:kaustubhdhamale.work@gmail.com" },
@@ -98,17 +98,17 @@ export function Contact() {
                       <Icon style={{ width: "17px", height: "17px", color: "#1e6bff" }} />
                     </div>
                     <div>
-                      <div style={{ fontSize: "11px", fontWeight: 600, color: "#94a3b8", marginBottom: "3px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                      <div style={{ fontSize: "11px", fontWeight: 600, color: "var(--muted)", marginBottom: "3px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                         {label}
                       </div>
                       {href ? (
-                        <a href={href} style={{ fontSize: "14px", color: "#475569", textDecoration: "none" }}
+                        <a href={href} style={{ fontSize: "14px", color: "var(--body)", textDecoration: "none" }}
                           onMouseEnter={e => (e.currentTarget.style.color = "#1e6bff")}
                           onMouseLeave={e => (e.currentTarget.style.color = "#475569")}>
                           {value}
                         </a>
                       ) : (
-                        <span style={{ fontSize: "14px", color: "#475569" }}>{value}</span>
+                        <span style={{ fontSize: "14px", color: "var(--body)" }}>{value}</span>
                       )}
                     </div>
                   </div>
@@ -117,15 +117,15 @@ export function Contact() {
             </div>
 
             <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "24px" }}>
-              <p style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "14px" }}>
+              <p style={{ fontSize: "11px", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "14px" }}>
                 Find Me On
               </p>
               <div style={{ display: "flex", gap: "10px" }}>
                 <a href="https://github.com/kaustubh7-coder" target="_blank" rel="noopener noreferrer" aria-label="GitHub"
                   style={{
                     display: "flex", alignItems: "center", gap: "8px", padding: "10px 16px",
-                    borderRadius: "10px", fontSize: "13px", fontWeight: 600, color: "#475569",
-                    background: "#f8fafc", border: "1px solid #e2e8f0", textDecoration: "none",
+                    borderRadius: "10px", fontSize: "13px", fontWeight: 600, color: "var(--body)",
+                    background: "var(--bg-soft)", border: "1px solid var(--card-border)", textDecoration: "none",
                     transition: "transform 0.15s",
                   }}
                   onMouseEnter={e => (e.currentTarget.style.transform = "translateY(-1px)")}
@@ -135,8 +135,8 @@ export function Contact() {
                 <a href="https://www.linkedin.com/in/kaustubh-dhamale-95836725a/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"
                   style={{
                     display: "flex", alignItems: "center", gap: "8px", padding: "10px 16px",
-                    borderRadius: "10px", fontSize: "13px", fontWeight: 600, color: "#475569",
-                    background: "#f8fafc", border: "1px solid #e2e8f0", textDecoration: "none",
+                    borderRadius: "10px", fontSize: "13px", fontWeight: 600, color: "var(--body)",
+                    background: "var(--bg-soft)", border: "1px solid var(--card-border)", textDecoration: "none",
                     transition: "transform 0.15s",
                   }}
                   onMouseEnter={e => (e.currentTarget.style.transform = "translateY(-1px)")}
@@ -149,7 +149,7 @@ export function Contact() {
 
           {/* Right — form */}
           <div style={{
-            background: "#fff", border: "1px solid #e2e8f0", borderRadius: "16px",
+            background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: "16px",
             padding: "32px", boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
           }}>
             {status === "success" ? (
@@ -159,19 +159,19 @@ export function Contact() {
                 style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 0", textAlign: "center", gap: "16px" }}
               >
                 <CheckCircle style={{ width: "56px", height: "56px", color: "#059669" }} />
-                <h3 style={{ fontSize: "20px", fontWeight: 700, color: "#0f172a" }}>Message Sent!</h3>
-                <p style={{ color: "#64748b" }}>Thanks for reaching out. I&apos;ll get back to you soon.</p>
+                <h3 style={{ fontSize: "20px", fontWeight: 700, color: "var(--heading)" }}>Message Sent!</h3>
+                <p style={{ color: "var(--body)" }}>Thanks for reaching out. I&apos;ll get back to you soon.</p>
                 <button onClick={() => setStatus("idle")}
                   style={{
                     marginTop: "8px", padding: "10px 24px", borderRadius: "10px", fontSize: "14px", fontWeight: 600,
-                    background: "#f8fafc", color: "#475569", border: "1px solid #e2e8f0", cursor: "pointer",
+                    background: "var(--bg-soft)", color: "var(--body)", border: "1px solid var(--card-border)", cursor: "pointer",
                   }}>
                   Send Another
                 </button>
               </motion.div>
             ) : (
               <form onSubmit={submit} noValidate>
-                <h3 style={{ fontSize: "17px", fontWeight: 700, color: "#0f172a", marginBottom: "24px" }}>Send a Message</h3>
+                <h3 style={{ fontSize: "17px", fontWeight: 700, color: "var(--heading)", marginBottom: "24px" }}>Send a Message</h3>
 
                 {status === "error" && (
                   <div style={{
@@ -186,7 +186,7 @@ export function Contact() {
 
                 <div id="form-row" style={{ display: "grid", gap: "16px", marginBottom: "16px" }}>
                   <div>
-                    <label htmlFor="name" style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#64748b", marginBottom: "6px" }}>
+                    <label htmlFor="name" style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--body)", marginBottom: "6px" }}>
                       Name <span style={{ color: "#ef4444" }}>*</span>
                     </label>
                     <input id="name" type="text" placeholder="Your name" autoComplete="name"
@@ -199,7 +199,7 @@ export function Contact() {
                     {errors.name && <p style={{ marginTop: "4px", fontSize: "12px", color: "#ef4444" }}>{errors.name}</p>}
                   </div>
                   <div>
-                    <label htmlFor="email" style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#64748b", marginBottom: "6px" }}>
+                    <label htmlFor="email" style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--body)", marginBottom: "6px" }}>
                       Email <span style={{ color: "#ef4444" }}>*</span>
                     </label>
                     <input id="email" type="email" placeholder="you@email.com" autoComplete="email"
@@ -214,7 +214,7 @@ export function Contact() {
                 </div>
 
                 <div style={{ marginBottom: "16px" }}>
-                  <label htmlFor="subject" style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#64748b", marginBottom: "6px" }}>
+                  <label htmlFor="subject" style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--body)", marginBottom: "6px" }}>
                     Subject <span style={{ color: "#ef4444" }}>*</span>
                   </label>
                   <input id="subject" type="text" placeholder="What's this about?"
@@ -228,7 +228,7 @@ export function Contact() {
                 </div>
 
                 <div style={{ marginBottom: "24px" }}>
-                  <label htmlFor="message" style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#64748b", marginBottom: "6px" }}>
+                  <label htmlFor="message" style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--body)", marginBottom: "6px" }}>
                     Message <span style={{ color: "#ef4444" }}>*</span>
                   </label>
                   <textarea id="message" rows={5} placeholder="Tell me about your project or opportunity..."
@@ -240,7 +240,7 @@ export function Contact() {
                   />
                   <div style={{ display: "flex", justifyContent: "space-between", marginTop: "4px" }}>
                     {errors.message ? <p style={{ fontSize: "12px", color: "#ef4444" }}>{errors.message}</p> : <span />}
-                    <span style={{ fontSize: "12px", color: "#94a3b8" }}>{form.message.length}/5000</span>
+                    <span style={{ fontSize: "12px", color: "var(--muted)" }}>{form.message.length}/5000</span>
                   </div>
                 </div>
 
@@ -248,7 +248,7 @@ export function Contact() {
                   style={{
                     display: "inline-flex", alignItems: "center", gap: "8px",
                     padding: "13px 28px", borderRadius: "12px", fontSize: "15px", fontWeight: 600,
-                    color: "#fff", background: "linear-gradient(135deg, #1e6bff, #1252cc)",
+                    color: "var(--card-bg)", background: "linear-gradient(135deg, #1e6bff, #1252cc)",
                     border: "none", cursor: status === "loading" ? "not-allowed" : "pointer",
                     boxShadow: "0 4px 16px rgba(30,107,255,0.3)",
                     opacity: status === "loading" ? 0.7 : 1,

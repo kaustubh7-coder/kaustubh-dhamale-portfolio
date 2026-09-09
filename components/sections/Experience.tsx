@@ -61,7 +61,7 @@ export function Experience() {
       initial={{ opacity: 0, y: 20 }}
       animate={inView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.5 }}
-      style={{ background: "#f8fafc", padding: "96px 0" }}
+      style={{ background: "var(--bg-soft)", padding: "96px 0" }}
     >
       <div style={{ maxWidth: "1140px", margin: "0 auto", padding: "0 40px" }}>
 
@@ -70,7 +70,7 @@ export function Experience() {
           <p style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: "#1e6bff", marginBottom: "12px" }}>
             Experience
           </p>
-          <h2 style={{ fontSize: "clamp(2rem, 4vw, 3rem)", fontWeight: 900, color: "#0f172a", lineHeight: 1.1, marginBottom: "16px" }}>
+          <h2 style={{ fontSize: "clamp(2rem, 4vw, 3rem)", fontWeight: 900, color: "var(--heading)", lineHeight: 1.1, marginBottom: "16px" }}>
             Professional Journey
           </h2>
           <div style={{ width: "48px", height: "3px", borderRadius: "9999px", background: "linear-gradient(90deg, #1e6bff, #60a5fa)" }} />
@@ -109,8 +109,8 @@ export function Experience() {
 
                 {/* Card */}
                 <div style={{
-                  background: "#ffffff",
-                  border: "1px solid #e2e8f0",
+                  background: "var(--card-bg)",
+                  border: "1px solid var(--card-border)",
                   borderRadius: "16px",
                   overflow: "hidden",
                   boxShadow: "0 2px 16px rgba(0,0,0,0.04)",
@@ -124,7 +124,7 @@ export function Experience() {
                     <div id={`exp-header-${i}`} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "24px", marginBottom: "24px" }}>
                       <div>
                         <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
-                          <h3 style={{ fontSize: "20px", fontWeight: 900, color: "#0f172a" }}>{job.role}</h3>
+                          <h3 style={{ fontSize: "20px", fontWeight: 900, color: "var(--heading)" }}>{job.role}</h3>
                           {job.current && (
                             <span style={{
                               display: "inline-flex", alignItems: "center", gap: "5px",
@@ -143,18 +143,18 @@ export function Experience() {
                       </div>
 
                       <div style={{ display: "flex", flexDirection: "column", gap: "6px", flexShrink: 0, textAlign: "right" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#64748b", justifyContent: "flex-end" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "var(--body)", justifyContent: "flex-end" }}>
                           <Calendar style={{ width: "14px", height: "14px" }} />
                           {job.period}
                         </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#64748b", justifyContent: "flex-end" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "var(--body)", justifyContent: "flex-end" }}>
                           <MapPin style={{ width: "14px", height: "14px" }} />
                           {job.loc}
                         </div>
                         <span style={{
                           alignSelf: "flex-end",
                           padding: "4px 12px", borderRadius: "9999px", fontSize: "12px", fontWeight: 600,
-                          background: "#f8fafc", color: "#64748b", border: "1px solid #e2e8f0",
+                          background: "var(--bg-soft)", color: "var(--body)", border: "1px solid var(--card-border)",
                         }}>
                           {job.type}
                         </span>
@@ -170,7 +170,7 @@ export function Experience() {
                             background: `${job.color}07`, border: `1px solid ${job.color}15`,
                           }}>
                             <div style={{ fontSize: "22px", fontWeight: 900, color: job.color }}>{n}</div>
-                            <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "3px", lineHeight: 1.3 }}>{l}</div>
+                            <div style={{ fontSize: "11px", color: "var(--muted)", marginTop: "3px", lineHeight: 1.3 }}>{l}</div>
                           </div>
                         ))}
                       </div>
@@ -179,7 +179,7 @@ export function Experience() {
                     {/* Bullet points */}
                     <ul style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "24px", listStyle: "none", padding: 0 }}>
                       {job.bullets.map((b, bi) => (
-                        <li key={bi} style={{ display: "flex", alignItems: "flex-start", gap: "12px", fontSize: "14px", lineHeight: 1.7, color: "#475569" }}>
+                        <li key={bi} style={{ display: "flex", alignItems: "flex-start", gap: "12px", fontSize: "14px", lineHeight: 1.7, color: "var(--body)" }}>
                           <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: job.color, flexShrink: 0, marginTop: "8px" }} aria-hidden />
                           {b}
                         </li>

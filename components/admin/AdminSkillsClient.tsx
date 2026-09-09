@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Pencil, Trash2, X, AlertCircle, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { Plus, Pencil, Trash2, X, AlertCircle, Loader2, Wrench, ChevronDown } from "lucide-react";
 
 interface Skill {
   id: string;
@@ -14,100 +13,89 @@ interface Skill {
   sortOrder: number;
 }
 
-type FormState = Omit<Skill, "id">;
+type FormState = { name: string; category: string; proficiency: number; sortOrder: number };
 
-const emptyForm: FormState = {
-  name: "",
-  category: "",
-  icon: "",
-  proficiency: 80,
-  sortOrder: 0,
-};
+const EMPTY: FormState = { name: "", category: "", proficiency: 80, sortOrder: 0 };
 
 const CATEGORIES = [
-  "Cloud",
-  "Monitoring",
-  "Operating Systems",
-  "Networking",
-  "Automation & IaC",
-  "Containers & Tools",
-  "IT Operations",
+  "Cloud", "Monitoring", "Operating Systems", "Networking",
+  "Automation & IaC", "Containers & Tools", "IT Operations",
 ];
+
+const CAT_COLORS: Record<string, string> = {
+  "Cloud":               "#1e6bff",
+  "Monitoring":          "#10b981",
+  "Operating Systems":   "#f59e0b",
+  "Networking":          "#6366f1",
+  "Automation & IaC":    "#ec4899",
+  "Containers & Tools":  "#0ea5e9",
+  "IT Operations":       "#8b5cf6",
+};
+
+/* ── shared styles ── */
+const inputStyle = {
+  width: "100%", background: "#0d1117",
+  border: "1px solid #2a3340", borderRadius: "10px",
+  padding: "11px 14px", fontSize: "14px", color: "#e6edf3",
+  outline: "none", transition: "border-color 0.15s",
+};
 
 export function AdminSkillsClient() {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [activeCat, setActiveCat] = useState<string>("All");
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Skill | null>(null);
-  const [form, setForm] = useState<FormState>(emptyForm);
+  const [form, setForm] = useState<FormState>(EMPTY);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const fetch_ = useCallback(async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/admin/skills");
       if (!res.ok) throw new Error();
       setSkills(await res.json());
-    } catch {
-      setError("Failed to load skills.");
-    } finally {
-      setLoading(false);
-    }
+    } catch { setError("Failed to load skills."); }
+    finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { fetch_(); }, [fetch_]);
+  useEffect(() => { load(); }, [load]);
 
-  // Group by category
-  const grouped = skills.reduce<Record<string, Skill[]>>((acc, skill) => {
-    acc[skill.category] = acc[skill.category] ?? [];
-    acc[skill.category].push(skill);
+  const grouped = skills.reduce<Record<string, Skill[]>>((acc, s) => {
+    (acc[s.category] ??= []).push(s);
     return acc;
   }, {});
 
-  const openCreate = () => {
-    setEditing(null);
-    setForm(emptyForm);
-    setFormError("");
-    setModalOpen(true);
-  };
+  const categories = ["All", ...CATEGORIES.filter(c => grouped[c]?.length)];
+  const visibleGroups = activeCat === "All"
+    ? Object.entries(grouped)
+    : Object.entries(grouped).filter(([cat]) => cat === activeCat);
 
-  const openEdit = (s: Skill) => {
+  const openCreate = () => { setEditing(null); setForm(EMPTY); setFormError(""); setModalOpen(true); };
+  const openEdit   = (s: Skill) => {
     setEditing(s);
-    setForm({ name: s.name, category: s.category, icon: s.icon ?? "", proficiency: s.proficiency, sortOrder: s.sortOrder });
-    setFormError("");
-    setModalOpen(true);
+    setForm({ name: s.name, category: s.category, proficiency: s.proficiency, sortOrder: s.sortOrder });
+    setFormError(""); setModalOpen(true);
   };
 
   const handleSave = async () => {
-    if (!form.name.trim() || !form.category.trim()) {
-      setFormError("Name and category are required.");
-      return;
-    }
-    setSaving(true);
-    setFormError("");
+    if (!form.name.trim() || !form.category) { setFormError("Name and category are required."); return; }
+    setSaving(true); setFormError("");
     try {
-      const payload = { ...form, icon: form.icon || null };
       const res = editing
-        ? await fetch(`/api/admin/skills/${editing.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
-        : await fetch("/api/admin/skills", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+        ? await fetch(`/api/admin/skills/${editing.id}`, { method: "PUT",  headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) })
+        : await fetch("/api/admin/skills",                { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
       const data = await res.json();
-      if (!res.ok) {
-        setFormError(data.error ?? "Save failed.");
-      } else {
-        setModalOpen(false);
-        fetch_();
-      }
-    } catch {
-      setFormError("Network error.");
-    } finally {
-      setSaving(false);
-    }
+      if (!res.ok) { setFormError(data.error ?? "Save failed."); return; }
+      setModalOpen(false); load();
+    } catch { setFormError("Network error."); }
+    finally { setSaving(false); }
   };
 
   const handleDelete = async () => {
@@ -115,156 +103,276 @@ export function AdminSkillsClient() {
     setDeleting(true);
     try {
       await fetch(`/api/admin/skills/${deleteId}`, { method: "DELETE" });
-      setDeleteId(null);
-      fetch_();
-    } catch {
-      setError("Delete failed.");
-    } finally {
-      setDeleting(false);
-    }
+      setDeleteId(null); load();
+    } catch { setError("Delete failed."); }
+    finally { setDeleting(false); }
   };
 
   return (
     <>
-      <div className="mb-6 flex items-center justify-between">
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "28px", gap: "16px", flexWrap: "wrap" }}>
         <div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Skills</h1>
-          <p className="text-sm text-[var(--text-secondary)] mt-1">Manage your technical skills.</p>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+            <Wrench style={{ width: "16px", height: "16px", color: "#1e6bff" }} />
+            <span style={{ fontSize: "11px", fontWeight: 700, color: "#1e6bff", textTransform: "uppercase", letterSpacing: "0.08em" }}>Manage</span>
+          </div>
+          <h1 style={{ fontSize: "26px", fontWeight: 800, color: "#e6edf3", letterSpacing: "-0.02em", marginBottom: "4px" }}>Skills</h1>
+          <p style={{ fontSize: "14px", color: "#8b949e" }}>{skills.length} skills across {Object.keys(grouped).length} categories</p>
         </div>
-        <Button onClick={openCreate} size="sm"><Plus className="w-4 h-4" />Add Skill</Button>
+        <button onClick={openCreate} style={{
+          display: "flex", alignItems: "center", gap: "8px",
+          padding: "11px 20px", borderRadius: "10px",
+          background: "linear-gradient(135deg, #1e6bff, #1252cc)",
+          color: "#fff", fontSize: "14px", fontWeight: 600,
+          border: "none", cursor: "pointer",
+          boxShadow: "0 4px 14px rgba(30,107,255,0.35)",
+        }}>
+          <Plus style={{ width: "16px", height: "16px" }} /> Add Skill
+        </button>
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 p-3 mb-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm" role="alert">
-          <AlertCircle className="w-4 h-4" />{error}
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 16px", borderRadius: "10px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171", fontSize: "13px", marginBottom: "20px" }} role="alert">
+          <AlertCircle style={{ width: "15px", height: "15px", flexShrink: 0 }} />{error}
         </div>
       )}
 
-      {loading ? (
-        <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-[var(--accent)]" /></div>
-      ) : skills.length === 0 ? (
-        <div className="text-center py-16 rounded-xl border border-dashed border-[var(--border)]">
-          <p className="text-[var(--text-muted)] text-sm mb-3">No skills yet.</p>
-          <Button onClick={openCreate} variant="secondary" size="sm"><Plus className="w-4 h-4" />Add your first skill</Button>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {Object.entries(grouped).map(([cat, catSkills]) => (
-            <div key={cat}>
-              <h2 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-3">{cat}</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {catSkills.map((s) => (
-                  <motion.div
-                    key={s.id}
-                    layout
-                    className="flex items-center justify-between rounded-xl border p-4"
-                    style={{ borderColor: "var(--border-subtle)", background: "var(--surface)" }}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-[var(--text-primary)] truncate mb-1">{s.name}</div>
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 h-1.5 rounded-full overflow-hidden bg-[var(--surface-2)]">
-                          <div className="h-full rounded-full bg-[var(--accent)]" style={{ width: `${s.proficiency}%` }} />
-                        </div>
-                        <span className="text-xs text-[var(--text-muted)] shrink-0">{s.proficiency}%</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1 ml-3 shrink-0">
-                      <button onClick={() => openEdit(s)} className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-2)] transition-all" aria-label={`Edit ${s.name}`}>
-                        <Pencil className="w-3 h-3" />
-                      </button>
-                      <button onClick={() => setDeleteId(s.id)} className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-red-400 hover:bg-red-500/5 transition-all" aria-label={`Delete ${s.name}`}>
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
+      {/* Category tabs */}
+      {!loading && skills.length > 0 && (
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "24px" }}>
+          {categories.map(cat => (
+            <button key={cat} onClick={() => setActiveCat(cat)} style={{
+              padding: "7px 16px", borderRadius: "9999px", fontSize: "13px", fontWeight: 500,
+              cursor: "pointer", border: "1px solid",
+              background: activeCat === cat ? "#1e6bff" : "transparent",
+              borderColor: activeCat === cat ? "#1e6bff" : "#2a3340",
+              color: activeCat === cat ? "#fff" : "#8b949e",
+              transition: "all 0.15s",
+            }}>
+              {cat}
+              {cat !== "All" && grouped[cat] && (
+                <span style={{ marginLeft: "6px", fontSize: "11px", opacity: 0.7 }}>
+                  ({grouped[cat].length})
+                </span>
+              )}
+            </button>
           ))}
         </div>
       )}
 
-      {/* Modal */}
+      {loading ? (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "80px 0" }}>
+          <Loader2 style={{ width: "24px", height: "24px", color: "#1e6bff", animation: "spin 1s linear infinite" }} />
+        </div>
+      ) : skills.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "80px 24px", borderRadius: "14px", border: "1px dashed #2a3340" }}>
+          <Wrench style={{ width: "32px", height: "32px", color: "#4d5966", margin: "0 auto 12px" }} />
+          <p style={{ color: "#8b949e", fontSize: "15px", marginBottom: "4px" }}>No skills yet</p>
+          <p style={{ color: "#4d5966", fontSize: "13px", marginBottom: "20px" }}>Add your first skill to get started</p>
+          <button onClick={openCreate} style={{ padding: "10px 22px", borderRadius: "9px", background: "#1e6bff", color: "#fff", fontSize: "13px", fontWeight: 600, border: "none", cursor: "pointer" }}>
+            Add Skill
+          </button>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
+          {visibleGroups.map(([cat, catSkills]) => {
+            const color = CAT_COLORS[cat] ?? "#1e6bff";
+            return (
+              <div key={cat}>
+                {/* Category heading */}
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "14px" }}>
+                  <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: color, flexShrink: 0 }} />
+                  <span style={{ fontSize: "13px", fontWeight: 700, color: "#e6edf3", textTransform: "uppercase", letterSpacing: "0.06em" }}>{cat}</span>
+                  <span style={{ fontSize: "12px", color: "#4d5966" }}>({catSkills.length})</span>
+                  <div style={{ flex: 1, height: "1px", background: "#2a3340" }} />
+                </div>
+
+                {/* Skill cards */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "12px" }}>
+                  {catSkills.sort((a, b) => a.sortOrder - b.sortOrder).map(s => (
+                    <motion.div key={s.id} layout style={{
+                      background: "#161b22", border: "1px solid #2a3340", borderRadius: "12px",
+                      padding: "16px", display: "flex", flexDirection: "column", gap: "12px",
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <span style={{ fontSize: "14px", fontWeight: 600, color: "#e6edf3", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {s.name}
+                        </span>
+                        <div style={{ display: "flex", gap: "4px", flexShrink: 0, marginLeft: "8px" }}>
+                          <button onClick={() => openEdit(s)} style={{ width: "28px", height: "28px", borderRadius: "7px", background: "none", border: "1px solid #2a3340", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#8b949e" }}
+                            onMouseEnter={e => { e.currentTarget.style.background = "#1c2230"; e.currentTarget.style.color = "#e6edf3"; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "#8b949e"; }}>
+                            <Pencil style={{ width: "13px", height: "13px" }} />
+                          </button>
+                          <button onClick={() => setDeleteId(s.id)} style={{ width: "28px", height: "28px", borderRadius: "7px", background: "none", border: "1px solid #2a3340", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#8b949e" }}
+                            onMouseEnter={e => { e.currentTarget.style.background = "rgba(239,68,68,0.08)"; e.currentTarget.style.color = "#f87171"; e.currentTarget.style.borderColor = "rgba(239,68,68,0.2)"; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "#8b949e"; e.currentTarget.style.borderColor = "#2a3340"; }}>
+                            <Trash2 style={{ width: "13px", height: "13px" }} />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Proficiency bar */}
+                      <div>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                          <span style={{ fontSize: "11px", color: "#4d5966" }}>Proficiency</span>
+                          <span style={{ fontSize: "11px", fontWeight: 600, color }}>{s.proficiency}%</span>
+                        </div>
+                        <div style={{ height: "5px", borderRadius: "9999px", background: "#1c2230", overflow: "hidden" }}>
+                          <div style={{ height: "100%", borderRadius: "9999px", background: `linear-gradient(90deg, ${color}, ${color}aa)`, width: `${s.proficiency}%`, transition: "width 0.3s" }} />
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── Add / Edit Modal ── */}
       <AnimatePresence>
         {modalOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-            onClick={() => setModalOpen(false)}
-          >
-            <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
-              className="relative w-full max-w-md rounded-2xl border p-6"
-              style={{ borderColor: "var(--border)", background: "var(--surface)", boxShadow: "0 25px 60px rgba(0,0,0,0.5)" }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between mb-5">
-                <h2 className="font-semibold text-[var(--text-primary)]">{editing ? "Edit Skill" : "New Skill"}</h2>
-                <button onClick={() => setModalOpen(false)} className="p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-lg transition-all" aria-label="Close"><X className="w-5 h-5" /></button>
+            style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", background: "rgba(0,0,0,0.7)", backdropFilter: "blur(6px)" }}
+            onClick={() => setModalOpen(false)}>
+            <motion.div initial={{ scale: 0.95, y: 10 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95 }}
+              style={{ width: "100%", maxWidth: "460px", background: "#161b22", border: "1px solid #2a3340", borderRadius: "18px", boxShadow: "0 32px 80px rgba(0,0,0,0.6)" }}
+              onClick={e => e.stopPropagation()}>
+
+              {/* Modal header */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px", borderBottom: "1px solid #2a3340" }}>
+                <h2 style={{ fontSize: "16px", fontWeight: 700, color: "#e6edf3" }}>{editing ? "Edit Skill" : "Add New Skill"}</h2>
+                <button onClick={() => setModalOpen(false)} style={{ width: "30px", height: "30px", borderRadius: "8px", background: "#1c2230", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#8b949e" }}>
+                  <X style={{ width: "15px", height: "15px" }} />
+                </button>
               </div>
-              {formError && (
-                <div className="flex items-center gap-2 p-3 mb-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm" role="alert">
-                  <AlertCircle className="w-4 h-4" />{formError}
-                </div>
-              )}
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">Name *</label>
-                  <input type="text" placeholder="e.g. Azure Monitor" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                    className="w-full bg-[var(--surface-2)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">Category *</label>
-                  <select value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-                    className="w-full bg-[var(--surface-2)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all"
-                  >
-                    <option value="">Select category...</option>
-                    {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">
-                    Proficiency: {form.proficiency}%
-                  </label>
-                  <input type="range" min={0} max={100} value={form.proficiency} onChange={(e) => setForm((f) => ({ ...f, proficiency: Number(e.target.value) }))}
-                    className="w-full accent-[var(--accent)]" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">Sort Order</label>
-                  <input type="number" value={form.sortOrder} onChange={(e) => setForm((f) => ({ ...f, sortOrder: Number(e.target.value) }))}
-                    className="w-full bg-[var(--surface-2)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all" />
+
+              {/* Modal body */}
+              <div style={{ padding: "24px" }}>
+                {formError && (
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", borderRadius: "9px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171", fontSize: "13px", marginBottom: "18px" }}>
+                    <AlertCircle style={{ width: "14px", height: "14px", flexShrink: 0 }} />{formError}
+                  </div>
+                )}
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+                  {/* Name */}
+                  <div>
+                    <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#8b949e", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Skill Name *</label>
+                    <input type="text" placeholder="e.g. Azure Monitor" value={form.name}
+                      onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                      style={inputStyle}
+                      onFocus={e => e.currentTarget.style.borderColor = "#1e6bff"}
+                      onBlur={e => e.currentTarget.style.borderColor = "#2a3340"} />
+                  </div>
+
+                  {/* Category */}
+                  <div>
+                    <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#8b949e", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Category *</label>
+                    <div style={{ position: "relative" }}>
+                      <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
+                        style={{ ...inputStyle, appearance: "none", paddingRight: "36px", cursor: "pointer" }}
+                        onFocus={e => e.currentTarget.style.borderColor = "#1e6bff"}
+                        onBlur={e => e.currentTarget.style.borderColor = "#2a3340"}>
+                        <option value="">Select a category…</option>
+                        {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                      <ChevronDown style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", width: "15px", height: "15px", color: "#4d5966", pointerEvents: "none" }} />
+                    </div>
+                  </div>
+
+                  {/* Proficiency slider */}
+                  <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+                      <label style={{ fontSize: "12px", fontWeight: 600, color: "#8b949e", textTransform: "uppercase", letterSpacing: "0.05em" }}>Proficiency</label>
+                      <span style={{ fontSize: "13px", fontWeight: 700, color: CAT_COLORS[form.category] ?? "#1e6bff" }}>{form.proficiency}%</span>
+                    </div>
+                    {/* Visual bar */}
+                    <div style={{ height: "6px", borderRadius: "9999px", background: "#1c2230", marginBottom: "10px", overflow: "hidden" }}>
+                      <div style={{ height: "100%", borderRadius: "9999px", background: CAT_COLORS[form.category] ?? "#1e6bff", width: `${form.proficiency}%`, transition: "width 0.1s" }} />
+                    </div>
+                    <input type="range" min={10} max={100} step={5} value={form.proficiency}
+                      onChange={e => setForm(f => ({ ...f, proficiency: Number(e.target.value) }))}
+                      style={{ width: "100%", accentColor: CAT_COLORS[form.category] ?? "#1e6bff", cursor: "pointer" }} />
+                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: "4px" }}>
+                      <span style={{ fontSize: "11px", color: "#4d5966" }}>10%</span>
+                      <span style={{ fontSize: "11px", color: "#4d5966" }}>100%</span>
+                    </div>
+                  </div>
+
+                  {/* Sort order */}
+                  <div>
+                    <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#8b949e", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Sort Order</label>
+                    <input type="number" min={0} value={form.sortOrder}
+                      onChange={e => setForm(f => ({ ...f, sortOrder: Number(e.target.value) }))}
+                      style={inputStyle}
+                      onFocus={e => e.currentTarget.style.borderColor = "#1e6bff"}
+                      onBlur={e => e.currentTarget.style.borderColor = "#2a3340"} />
+                    <p style={{ fontSize: "11px", color: "#4d5966", marginTop: "5px" }}>Lower numbers appear first within each category.</p>
+                  </div>
                 </div>
               </div>
-              <div className="flex justify-end gap-2 mt-6">
-                <Button variant="secondary" size="sm" onClick={() => setModalOpen(false)}>Cancel</Button>
-                <Button size="sm" loading={saving} onClick={handleSave}>{editing ? "Save Changes" : "Add Skill"}</Button>
+
+              {/* Modal footer */}
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", padding: "16px 24px", borderTop: "1px solid #2a3340" }}>
+                <button onClick={() => setModalOpen(false)} style={{ padding: "10px 20px", borderRadius: "9px", background: "#1c2230", border: "1px solid #2a3340", color: "#8b949e", fontSize: "13px", fontWeight: 600, cursor: "pointer" }}>
+                  Cancel
+                </button>
+                <button onClick={handleSave} disabled={saving} style={{
+                  display: "flex", alignItems: "center", gap: "8px",
+                  padding: "10px 22px", borderRadius: "9px",
+                  background: "linear-gradient(135deg, #1e6bff, #1252cc)",
+                  color: "#fff", fontSize: "13px", fontWeight: 600,
+                  border: "none", cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1,
+                }}>
+                  {saving && <Loader2 style={{ width: "14px", height: "14px", animation: "spin 1s linear infinite" }} />}
+                  {editing ? "Save Changes" : "Add Skill"}
+                </button>
               </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Delete confirm */}
+      {/* ── Delete confirm ── */}
       <AnimatePresence>
         {deleteId && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-            onClick={() => setDeleteId(null)}
-          >
+            style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", background: "rgba(0,0,0,0.7)", backdropFilter: "blur(6px)" }}
+            onClick={() => setDeleteId(null)}>
             <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
-              className="w-full max-w-sm rounded-2xl border p-6"
-              style={{ borderColor: "var(--border)", background: "var(--surface)", boxShadow: "0 25px 60px rgba(0,0,0,0.5)" }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h3 className="font-semibold text-[var(--text-primary)] mb-2">Delete Skill</h3>
-              <p className="text-sm text-[var(--text-secondary)] mb-5">This action cannot be undone.</p>
-              <div className="flex justify-end gap-2">
-                <Button variant="secondary" size="sm" onClick={() => setDeleteId(null)}>Cancel</Button>
-                <Button variant="danger" size="sm" loading={deleting} onClick={handleDelete}>Delete</Button>
+              style={{ width: "100%", maxWidth: "360px", background: "#161b22", border: "1px solid #2a3340", borderRadius: "16px", padding: "28px", boxShadow: "0 32px 80px rgba(0,0,0,0.6)" }}
+              onClick={e => e.stopPropagation()}>
+              <div style={{ width: "44px", height: "44px", borderRadius: "12px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "16px" }}>
+                <Trash2 style={{ width: "20px", height: "20px", color: "#f87171" }} />
+              </div>
+              <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#e6edf3", marginBottom: "8px" }}>Delete Skill</h3>
+              <p style={{ fontSize: "14px", color: "#8b949e", marginBottom: "24px", lineHeight: 1.6 }}>
+                This skill will be permanently removed and will no longer appear on your portfolio.
+              </p>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+                <button onClick={() => setDeleteId(null)} style={{ padding: "10px 20px", borderRadius: "9px", background: "#1c2230", border: "1px solid #2a3340", color: "#8b949e", fontSize: "13px", fontWeight: 600, cursor: "pointer" }}>
+                  Cancel
+                </button>
+                <button onClick={handleDelete} disabled={deleting} style={{
+                  display: "flex", alignItems: "center", gap: "8px",
+                  padding: "10px 20px", borderRadius: "9px", background: "#dc2626",
+                  color: "#fff", fontSize: "13px", fontWeight: 600, border: "none",
+                  cursor: deleting ? "not-allowed" : "pointer", opacity: deleting ? 0.7 : 1,
+                }}>
+                  {deleting && <Loader2 style={{ width: "14px", height: "14px", animation: "spin 1s linear infinite" }} />}
+                  Delete
+                </button>
               </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </>
   );
 }

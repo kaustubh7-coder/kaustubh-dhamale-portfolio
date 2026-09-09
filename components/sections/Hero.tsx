@@ -16,7 +16,7 @@ export function Hero() {
         minHeight: "100vh",
         display: "flex",
         alignItems: "center",
-        background: "linear-gradient(150deg, #f0f6ff 0%, #ffffff 55%, #f8f9fc 100%)",
+        background: "var(--section-bg)",
         position: "relative",
         overflow: "hidden",
       }}
@@ -210,7 +210,7 @@ export function Hero() {
               </button>
 
               <a
-                href="/resume.pdf"
+                href="/Kaustubh Dhamale CV.pdf"
                 download
                 style={{
                   display: "flex",
@@ -337,7 +337,7 @@ export function Hero() {
                 }}
               >
                 <Image
-                  src="/profile.jpg"
+                  src="/24031.png"
                   alt="Kaustubh Dhamale — Azure Cloud Support Engineer"
                   fill
                   sizes="340px"

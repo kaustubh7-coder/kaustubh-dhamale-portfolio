@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Download, Menu, X } from "lucide-react";
+import { Download, Menu, X, Sun, Moon } from "lucide-react";
 import { GithubIcon, LinkedinIcon } from "@/components/ui/Icons";
+import { useTheme } from "@/components/ui/ThemeProvider";
 
 const LINKS = [
   { label: "Home",           href: "#home" },
@@ -20,6 +21,7 @@ export function Navbar() {
   const [open,     setOpen]     = useState(false);
   const [active,   setActive]   = useState("home");
   const [mounted,  setMounted]  = useState(false);
+  const { theme, toggle } = useTheme();
 
   useEffect(() => {
     setMounted(true);
@@ -47,9 +49,9 @@ export function Navbar() {
   };
 
   const navBg = scrolled
-    ? "rgba(255,255,255,0.97)"
-    : "rgba(255,255,255,0.98)";
-  const navBorder = scrolled ? "1px solid #e2e8f0" : "1px solid transparent";
+    ? "var(--nav-bg)"
+    : "var(--nav-bg)";
+  const navBorder = scrolled ? "1px solid var(--nav-border)" : "1px solid transparent";
   const navShadow = scrolled ? "0 2px 24px rgba(0,0,0,0.07)" : "none";
 
   return (
@@ -113,10 +115,10 @@ export function Navbar() {
               KD
             </div>
             <div style={{ textAlign: "left" }}>
-              <div style={{ fontSize: "14px", fontWeight: 700, color: "#0f172a", lineHeight: 1.2 }}>
+              <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--heading)", lineHeight: 1.2 }}>
                 Kaustubh Dhamale
               </div>
-              <div style={{ fontSize: "11px", color: "#94a3b8", lineHeight: 1.2 }}>
+              <div style={{ fontSize: "11px", color: "var(--muted)", lineHeight: 1.2 }}>
                 Azure Cloud Engineer
               </div>
             </div>
@@ -139,8 +141,8 @@ export function Navbar() {
                     borderRadius: "8px",
                     fontSize: "13px",
                     fontWeight: isActive ? 600 : 500,
-                    color: isActive ? "#1e6bff" : "#64748b",
-                    background: isActive ? "#eff4ff" : "transparent",
+                    color: isActive ? "var(--blue)" : "var(--text-2)",
+                    background: isActive ? "var(--blue-soft)" : "transparent",
                     border: "none",
                     cursor: "pointer",
                     whiteSpace: "nowrap",
@@ -204,9 +206,27 @@ export function Navbar() {
             >
               <LinkedinIcon className="w-[18px] h-[18px]" />
             </a>
-            <div style={{ width: "1px", height: "20px", background: "#e2e8f0", margin: "0 4px" }} />
+            <div style={{ width: "1px", height: "20px", background: "var(--border)", margin: "0 4px" }} />
+            {/* Theme toggle */}
+            <button
+              onClick={toggle}
+              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              style={{
+                width: "36px", height: "36px", borderRadius: "8px",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                background: "transparent", border: "none", cursor: "pointer",
+                color: "var(--text-2)", transition: "background 0.15s",
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = "var(--bg-soft)")}
+              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+            >
+              {mounted && theme === "dark"
+                ? <Sun style={{ width: "17px", height: "17px" }} />
+                : <Moon style={{ width: "17px", height: "17px" }} />}
+            </button>
+            <div style={{ width: "1px", height: "20px", background: "var(--border)", margin: "0 4px" }} />
             <a
-              href="/resume.pdf"
+              href="/Kaustubh Dhamale CV.pdf"
               download
               style={{
                 display: "flex",
@@ -293,8 +313,8 @@ export function Navbar() {
                 bottom: 0,
                 zIndex: 99,
                 width: "280px",
-                background: "#fff",
-                borderLeft: "1px solid #e2e8f0",
+                background: "var(--bg-card)",
+                borderLeft: "1px solid var(--border)",
                 display: "flex",
                 flexDirection: "column",
               }}
@@ -306,10 +326,10 @@ export function Navbar() {
                   alignItems: "center",
                   justifyContent: "space-between",
                   padding: "20px 20px",
-                  borderBottom: "1px solid #f1f5f9",
+                  borderBottom: "1px solid var(--border)",
                 }}
               >
-                <div style={{ fontWeight: 700, fontSize: "15px", color: "#0f172a" }}>
+                <div style={{ fontWeight: 700, fontSize: "15px", color: "var(--heading)" }}>
                   Menu
                 </div>
                 <button
@@ -318,13 +338,13 @@ export function Navbar() {
                     width: "32px",
                     height: "32px",
                     borderRadius: "8px",
-                    background: "#f8f9fc",
+                    background: "var(--bg-soft)",
                     border: "none",
                     cursor: "pointer",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    color: "#64748b",
+                    color: "var(--text-2)",
                   }}
                   aria-label="Close"
                 >
@@ -350,8 +370,8 @@ export function Navbar() {
                         borderRadius: "10px",
                         fontSize: "15px",
                         fontWeight: isActive ? 600 : 500,
-                        color: isActive ? "#1e6bff" : "#475569",
-                        background: isActive ? "#eff4ff" : "transparent",
+                        color: isActive ? "var(--blue)" : "var(--text-2)",
+                        background: isActive ? "var(--blue-soft)" : "transparent",
                         border: "none",
                         cursor: "pointer",
                       }}
@@ -363,9 +383,9 @@ export function Navbar() {
               </nav>
 
               {/* Footer */}
-              <div style={{ padding: "16px 20px 28px", borderTop: "1px solid #f1f5f9", display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div style={{ padding: "16px 20px 28px", borderTop: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: "12px" }}>
                 <a
-                  href="/resume.pdf"
+                  href="/Kaustubh Dhamale CV.pdf"
                   download
                   style={{
                     display: "flex",
